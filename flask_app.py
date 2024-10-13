@@ -211,7 +211,8 @@ def slack_events():
         return handler.url_verification_handler(slack_body)
 
     if slack_body.get("event", {}).get("type") == "app_mention":
-        handler.handle_app_mention(slack_body)
+        # handler.handle_app_mention(slack_body)
+        print(f"event --- {slack_body}")
         return jsonify({"statusCode": 200})
 
     return jsonify({"statusCode": 400, "body": "Invalid request"})
