@@ -4,6 +4,7 @@ from dotenv import find_dotenv, load_dotenv
 import os
 import requests
 from langchain.agents.agent_types import AgentType
+from flask import Flask, request, jsonify
 # from langchain_experimental.agents.agent_toolkits import create_csv_agent
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
@@ -20,38 +21,39 @@ SLACK_SIGNING_SECRET = os.environ["SLACK_SIGNING_SECRET"]
 SLACK_BOT_USER_ID = os.environ["SLACK_BOT_USER_ID"]
 OPEN_AI_API_KEY = os.environ["OPEN_AI_API_KEY"]
 SLACK_BASE_URL = "https://slack.com/api/chat.postMessage"
-S3_BUCKET_NAME = 'starkslackbot'
-S3_FILE_NAME = 'Learner Data.csv'
+S3_BUCKET_NAME = "starkslackbot"
+S3_FILE_NAME = "Learner Data.csv"
 DYNAMO_DB_TABLE = "ProcessedSlackEventsId"
 
+stark = Flask(__name__)
 
-class LambdaHandler:
+class SlackBotHandler:
     def __init__(self) -> None:
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.slack_url = SLACK_BASE_URL
-        self.s3 = boto3.client('s3')
+        self.s3 = boto3.client("s3")
         self.learner_data = pd.DataFrame()
-        self.llm = ChatOpenAI(temperature=0, model='gpt-4o', api_key=OPEN_AI_API_KEY)
+        self.llm = ChatOpenAI(temperature=0, model="gpt-4o", api_key=OPEN_AI_API_KEY)
         self.df_agent = ""
-        self.dynamodb = boto3.resource('dynamodb')
+        self.dynamodb = boto3.resource("dynamodb")
         self.dynamodb_table = self.dynamodb.Table(DYNAMO_DB_TABLE)
         self.client_msg_id = ""
         self.event_id = ""
 
-    def handle_app_mention(self, event):
+    def handle_app_mention(self, body):
         """
-            function to handle app slack mentions
+        function to handle app slack mentions
         """
-        body = json.loads(event["body"])
+        body = json.loads(body["body"])
         self.load_data()
         df_agent = create_pandas_dataframe_agent(
-                llm=self.llm,
-                df=self.learner_data,
-                # verbose=True,
-                agent_type=AgentType.OPENAI_FUNCTIONS,
-                allow_dangerous_code=True
-            )
+            llm=self.llm,
+            df=self.learner_data,
+            # verbose=True,
+            agent_type=AgentType.OPENAI_FUNCTIONS,
+            allow_dangerous_code=True,
+        )
         self.client_msg_id = body["event"]["client_msg_id"]
         self.event_id = body["event_id"]
         # self.logger.info(f"event id {self.event_id}")
@@ -146,42 +148,35 @@ class LambdaHandler:
             )
 
     def send_slack_response(self, body, msg):
-        """curl -X POST -H 'Authorization: Bearer token' \
--H 'Content-type: application/json' \
---data '{"channel":"C07F9QNS8S0","text":"I hope the tour went well, Mr. Wonka."}' \
-https://slack.com/api/chat.postMessage"""
         try:
             channel_id = body["event"]["channel"]
             # url = "https://slack.com/api/chat.postMessage"
             headers = {
                 "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             }
-            payload = {
-                'channel': channel_id,
-                'text': msg["output"]
-            }
+            payload = {"channel": channel_id, "text": msg["output"]}
             response = requests.post(self.slack_url, headers=headers, json=payload)
         except Exception as e:
             self.logger.info(f"Error occured at sending slack response --- {e}")
 
     def load_data(self):
         dtype = {
-        'Learner ID': str,
-        'Course Prefix': str,
-        'Platform': str,
-        'Course Name': str,
-        'Term': str,
-        'AY': str,
-        'Verified': int,
-        'Passed': int,
-        'Credit Converted': int,
-        'Grade': int
+            "Learner ID": str,
+            "Course Prefix": str,
+            "Platform": str,
+            "Course Name": str,
+            "Term": str,
+            "AY": str,
+            "Verified": int,
+            "Passed": int,
+            "Credit Converted": int,
+            "Grade": int,
         }
 
         try:
-            obj = self.s3.get_object(Bucket=S3_BUCKET_NAME,Key=S3_FILE_NAME)
-            data = obj['Body'].read().decode('utf-8')
+            obj = self.s3.get_object(Bucket=S3_BUCKET_NAME, Key=S3_FILE_NAME)
+            data = obj["Body"].read().decode("utf-8")
             self.learner_data = pd.read_csv(StringIO(data), dtype=dtype)
         except Exception as e:
             self.logger.info(f"Error at loading data from S3 --- {e}")
@@ -192,12 +187,12 @@ https://slack.com/api/chat.postMessage"""
     #     except Exception as e:
     #         self.logger.info(f"Error occured creating csv agent --- {e}")
 
-    def url_verification_handler(self,slack_event, context):
+    def url_verification_handler(self, slack_event, context):
         """
-            Handles verification url from slack api
+        Handles verification url from slack api
 
-            Returns: 
-                Challenge parameter
+        Returns:
+            Challenge parameter
         """
         challenge_answer = slack_event.get("challenge")
         self.logger.info(f"url_verification_handler was called")
@@ -206,23 +201,21 @@ https://slack.com/api/chat.postMessage"""
     def log(self, txt):
         self.logger.info(f"{txt}")
 
-def lambda_handler(event, context):
-    handler = LambdaHandler()
-    # handler.log(event)
-    # Check if it's a URL verification event
-    if "body" in event:
-        slack_body = json.loads(event["body"])
 
-        if slack_body.get("type") == "url_verification":
-            return handler.url_verification_handler(slack_body, context)
-        
-        if slack_body.get("event", {}).get("type") == "app_mention":
-            handler.handle_app_mention(event)
-    else:
-        return {
-            'statusCode' : 400,
-            'body': "no body found"
-        }
-    return {
-        'statusCode' : 200,
-    }
+@stark.route('/slack/events', methods=['POST'])
+def slack_events():
+    handler = SlackBotHandler()
+    slack_body = request.json
+
+    if slack_body.get("type") == "url_verification":
+        return handler.url_verification_handler(slack_body)
+
+    if slack_body.get("event", {}).get("type") == "app_mention":
+        handler.handle_app_mention(slack_body)
+        return jsonify({"statusCode": 200})
+
+    return jsonify({"statusCode": 400, "body": "Invalid request"})
+
+if __name__ == "__main__":
+    stark.run(debug=True, port=5000)
+
