@@ -15,7 +15,7 @@ from boto3.dynamodb.conditions import Key
 import time
 
 
-load_dotenv(find_dotenv())
+load_dotenv(find_dotenv(), override=True)
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_SIGNING_SECRET = os.environ["SLACK_SIGNING_SECRET"]
 SLACK_BOT_USER_ID = os.environ["SLACK_BOT_USER_ID"]
@@ -27,16 +27,23 @@ DYNAMO_DB_TABLE = "ProcessedSlackEventsId"
 
 stark = Flask(__name__)
 
+log_file = "app.log"  # Log file name
+logging.basicConfig(
+    # filename=log_file,
+    level=logging.INFO,  # Log level
+    format="%(asctime)s - %(levelname)s - %(message)s",  # Log format
+)
+
 class SlackBotHandler:
     def __init__(self) -> None:
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.slack_url = SLACK_BASE_URL
-        self.s3 = boto3.client("s3")
+        self.s3 = boto3.client("s3", region_name='us-east-1')
         self.learner_data = pd.DataFrame()
         self.llm = ChatOpenAI(temperature=0, model="gpt-4o", api_key=OPEN_AI_API_KEY)
         self.df_agent = ""
-        self.dynamodb = boto3.resource("dynamodb")
+        self.dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         self.dynamodb_table = self.dynamodb.Table(DYNAMO_DB_TABLE)
         self.client_msg_id = ""
         self.event_id = ""
@@ -45,7 +52,7 @@ class SlackBotHandler:
         """
         function to handle app slack mentions
         """
-        body = json.loads(body["body"])
+        # body = json.loads(body["body"])
         self.load_data()
         df_agent = create_pandas_dataframe_agent(
             llm=self.llm,
@@ -153,7 +160,7 @@ class SlackBotHandler:
             # url = "https://slack.com/api/chat.postMessage"
             headers = {
                 "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-                "Content-Type": "application/json",
+                "Content-Type": "application/json; charset=utf-8",
             }
             payload = {"channel": channel_id, "text": msg["output"]}
             response = requests.post(self.slack_url, headers=headers, json=payload)
@@ -187,7 +194,7 @@ class SlackBotHandler:
     #     except Exception as e:
     #         self.logger.info(f"Error occured creating csv agent --- {e}")
 
-    def url_verification_handler(self, slack_event, context):
+    def url_verification_handler(self, slack_event):
         """
         Handles verification url from slack api
 
@@ -201,9 +208,9 @@ class SlackBotHandler:
     def log(self, txt):
         self.logger.info(f"{txt}")
 
-
 @stark.route('/slack/events', methods=['POST'])
 def slack_events():
+    logging.info("Request recieved from slack.")
     handler = SlackBotHandler()
     slack_body = request.json
 
@@ -211,12 +218,17 @@ def slack_events():
         return handler.url_verification_handler(slack_body)
 
     if slack_body.get("event", {}).get("type") == "app_mention":
-        # handler.handle_app_mention(slack_body)
-        print(f"event --- {slack_body}")
-        return jsonify({"statusCode": 200})
+        handler.handle_app_mention(slack_body)
+        # print(f"event --- {slack_body}")
+        return {"statusCode": 200}
+    
+    logging.info("Slack request completed.")
 
     return jsonify({"statusCode": 400, "body": "Invalid request"})
 
+@stark.route('/health', methods=['GET'])
+def health_endpoint():
+    return jsonify({"statusCode": 200, "message": "API is live."})
+
 if __name__ == "__main__":
     stark.run(debug=True, port=5000)
-
