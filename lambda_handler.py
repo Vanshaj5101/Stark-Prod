@@ -145,7 +145,7 @@ class LambdaHandler:
             )
 
     def send_slack_response(self, body, msg):
-        """curl -X POST -H 'Authorization: Bearer xoxb-879410039302-7475502949047-GnJQ00Zn4KNTP5ehFZeGU2zt' \
+        """curl -X POST -H 'Authorization: Bearer token' \
 -H 'Content-type: application/json' \
 --data '{"channel":"C07F9QNS8S0","text":"I hope the tour went well, Mr. Wonka."}' \
 https://slack.com/api/chat.postMessage"""
