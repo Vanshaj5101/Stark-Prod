@@ -1,0 +1,37 @@
+Learner ID,Course Prefix,Platform,Course Name,Term,AY,Verified,Passed,Credit Converted,Grade
+asuLearn1,MAT-117,Inclass,MAT,2241A,AY24,1,1,1,89
+asuLearn1,ENG-101,Online,ENG,2241A,AY24,0,0,0,92
+asuLearn1,PHY-400,Online,PHY,Self Paced,AY22,1,1,0,16
+asuLearn10,COM-212,Online,COM,Self Paced,AY22,1,1,1,66
+asuLearn11,MAT-117,Inclass,MAT,2241A,AY24,0,0,0,67
+asuLearn12,PHY-400,Online,PHY,Self Paced,AY22,1,1,1,77
+asuLearn13,PHY-400,Online,PHY,Self Paced,AY22,1,1,1,79
+asuLearn13,SOC-114,Inclass,SOC,2231C,AY23,0,0,0,83
+asuLearn13,COM-212,Online,COM,Self Paced,AY23,1,1,1,94
+asuLearn13,MAT-117,Inclass,MAT,2231C,AY23,0,0,0,6
+asuLearn13,ENG-101,Online,ENG,2231C,AY23,1,1,1,57
+asuLearn14,COM-212,Online,COM,Self Paced,AY22,0,0,0,76
+asuLearn15,PHY-400,Online,PHY,Self Paced,AY22,1,0,0,1
+asuLearn16,COM-212,Online,COM,Self Paced,AY22,1,1,1,99
+asuLearn17,SOC-114,Inclass,SOC,2241A,AY24,1,1,1,80
+asuLearn17,SOC-114,Inclass,SOC,2244A,AY24,1,1,0,51
+asuLearn17,ENG-101,Online,ENG,2244A,AY24,1,1,1,17
+asuLearn18,MAT-117,Inclass,MAT,2244A,AY24,0,0,0,97
+asuLearn19,SOC-114,Inclass,SOC,2244A,AY24,0,0,0,97
+asuLearn2,ENG-101,Online,ENG,2244A,AY24,0,0,0,55
+asuLearn20,COM-212,Online,COM,Self Paced,AY22,1,1,1,75
+asuLearn23,ENG-101,Online,ENG,2244A,AY24,0,0,0,95
+asuLearn24,COM-212,Online,COM,Self Paced,AY22,1,1,1,73
+asuLearn25,MAT-117,Inclass,MAT,2244A,AY24,1,0,0,79
+asuLearn26,SOC-114,Inclass,SOC,2231A,AY23,0,0,0,38
+asuLearn27,ENG-101,Online,ENG,2231B,AY23,1,1,1,69
+asuLearn28,SOC-114,Inclass,SOC,2231B,AY23,0,0,0,7
+asuLearn29,PHY-400,Online,PHY,Self Paced,AY22,1,0,0,70
+asuLearn29,MAT-117,Inclass,MAT,2231C,AY23,1,1,1,87
+asuLearn3,COM-212,Online,COM,Self Paced,AY23,1,0,0,2
+asuLearn30,MAT-117,Inclass,MAT,2241A,AY24,1,1,1,67
+asuLearn31,PHY-400,Online,PHY,Self Paced,AY22,1,1,1,93
+asuLearn34,ENG-101,Online,ENG,2231C,AY23,1,1,1,85
+asuLearn4,COM-212,Online,COM,Self Paced,AY22,0,0,0,0
+asuLearn5,COM-212,Online,COM,Self Paced,AY22,1,1,1,62
+asuLearn17,MAT-117,Inclass,MAT,2241A,AY22,1,1,0,33
